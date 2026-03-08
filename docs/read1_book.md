@@ -79,14 +79,22 @@ Node version : 22.x
 ```bash  
 npm i -g typescript             : Install typescript globally
 
+# you can check the verson of Typescript using
+tsc -v
 
 npm init -y
 
 npm i express
-npm i multer   : Used for file upload 
+npm i multer   # Used for file upload 
 npm i dotenv
 npm i -D nodemon typescript @types/node  ts-node
 ```
+
+Run the command `npm run build`, To build our project.
+
+
+----
+
 
 
 `-D` is alias for `--save-dev`: It will add your package inside the `devDependencies` section of your `package.json` file
@@ -156,7 +164,7 @@ You can get the exact path using: `npm config get cache`
 
 -------------------------------------------------------------------------------------------
 
-Then install langchain and langgraph
+## Install langchain and langgraph
 
 
 `ChatTogetherAI` it is API offers 50+ open source models
@@ -168,6 +176,8 @@ Too see all proders : https://docs.langchain.com/oss/javascript/integrations/pro
 > Firework
 - tempmail: woceli3554@dnsclick.com
 - password: salatuvalAtuboy1234@3456
+
+(Firework no longer offer completely free LLM models, It charges some amount at lest $0.1 )  
 
 profile > settings > api_key
 
@@ -271,17 +281,32 @@ npx ts-node-esm src/index2.ts
 
 ```
 
-How tsx win the battle
+
+> NOTE:
+- `ts-node` Run the typescript using CommonJS. works when your project does **NOT use "type":"module"**. Use `requires()` internally.
+- `ts-node-esm` : Run Typescript using ES Modules (ESM). Needed when your **package.json has "type":"module"**. Uses `import/export`
+
+<br>
+
+`tsx` is not downloaded by default with the installation of tsc.
+
+tsc is TypeScript Compiler. It converts .ts --> .js . Does full type-checking. Create output file. Used for production. Used to build project. 
+
+tsx i TypeScript eXecutor(runner). Run .ts file. No separate build step [no any intermidiatory .js file is created]. Faster for scripts. Uses lightweight taspilation(esbuild). It is used to Run the file, Faster than tsc
+
+<br>
+
+The `ts-node` and `tsx` Both do the same work. Run typescript files directly without creating a `.js`.
+- ts-node is old tool, heavy memory usage, slow.
+- `tsx` is new tool, very fast, lightweight. 
+
+> This is how tsx win the battle
 - It is faster than ts-node
 - excellent support with tsconfig.json
 - memory usage ~35 mb, whereas ts-node use ~125 mb
 - installation size is also less compared to ts-node
 - beginner friendly. zero configuration required just install and start using it. 
 
-
-> NOTE:
-- `ts-node` Run the typescript using CommonJS. works when your project does **NOT use "type":"module"**. Use `requires()` internally.
-- `ts-node-esm` : Run Typescript using ES Modules (ESM). Needed when your **package.json has "type":"module"**. Uses `import/export`
 
 
 -------------------------------------------------------
@@ -368,21 +393,24 @@ Value of `this` in:
 # Chapter 2 Prompt Enginnering
 
 
+
+
+visit: index2.ts
+
 visit: index3.ts
 
 
 The process of **writing refining and optimizing inputs** to encourage Generative AI to create a a specific high-quality outputs.
 
-- Zero shots ---> **Don't provide example** to AI model how it should perform the task
-
-
+1. Zero shots ---> **Don't provide example** to AI model how it should perform the task
 ```js
 {
   role: "system",
   content: "You are a helpful assistant that translates English to Hindi. Translate the user sentence.",
-},
-- Few shots ---> **Guide** the model how to perform the Task by providing exmples
+}
 ```
+
+2. Few shots ---> **Guide** the model how to perform the Task by providing few exmples. For what input what output you expects.
 ```js
 {
   role: "system",
@@ -393,15 +421,67 @@ The process of **writing refining and optimizing inputs** to encourage Generativ
   `,
 },
 ```
-- chain of thoughts (COT) -----> tell the model to perform the job by walking **through the step**
-
+3. chain of thoughts (COT) --> COT is prompt engineering technique that tell AI to think step by step. 
 
 
 
 ----------------------------------------------------------
 
 
-We have different types of messages
-- SystemMessage
+## We have different types of messages
+- SystemMessage : SystemMessage is like we give the AI a specific role.
 - AIMessage
-- HumanMessage
+- HumanMessage : A message(question,input) provided by human
+
+
+
+
+## Few example of TypeScript configuration files, So that you can understand the Typescript configuration files.
+Typescript configuration file examples
+
+visit : ./typescript_example.md
+
+### ESM(ES Module) vs CommonJS
+
+
+ESM
+- Asynchronous (parallel fetching style)
+- "type": "module" , ".mjs" , and In Typescript "module": "ESNext"
+- Before code run plan how the execution is going to perform. Parse(see) all module -> execute them in their dependency order
+- Main thread is non-blocking usually
+
+Parse all `import` statement. Build dependency graph. rewire everything. Start execution from the entry point(eg. index.js or main.jsx) , but actually evalute deepest dependency first [like post-order traversal]
+
+<br>
+
+CommonJS
+- Synchrounous (blocking nature)
+- "type": "commonjs" , ".cjs" files
+- When it see`require()` it immediately load and execute
+- Block the Main thread until the module is fully loaded and executed. Block untill the module is fully loaded & execute.
+
+immeidately(sunchronous) way read the file. execute it top-to-bottom. If it has `require()` call it. (recursively in sub-files also, blocking nature.)
+
+<br>
+
+Both ESM and CommonJS(CJS) execute top-to-bottom. But the difference is when and how modules are loaded and initialiezed, not the execution order inside a file.
+
+### The difference between `import "dotenv/config";` vs `import dotenv from "dotenv";` 
+
+1. `import "dotenv/config";`
+It Automatically calls `dotenv.config()` for you at import time. One liner, clean, no extra setup
+- It assumes the `.env` is present in current directiory where your `.js` file is present [ inside which you use the import statement ] .
+- OR you can set an environment variable and run the `.js` file `DOTENV_CONFIG_PATH=/custom/path/.env node app.js`  
+
+
+
+2. `import dotenv from "dotenv";`
+- `dotenv.config({ path: './custom/.env', debug: true });`
+- Default import gives you `dotenv` object. You need to call the **dotenv.config()** method.
+- Allows customization (custom path, encoding, debu, override, etc.)
+
+---
+
+OR use the CLI **--env-file** flag `node --env-file=./custom/.env app.js`. This is node.js feature not **dotenv**
+
+## 
