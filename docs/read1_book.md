@@ -485,3 +485,7 @@ It Automatically calls `dotenv.config()` for you at import time. One liner, clea
 OR use the CLI **--env-file** flag `node --env-file=./custom/.env app.js`. This is node.js feature not **dotenv**
 
 ## 
+
+
+npm --> npx
+pnpm --> pnpx (older) ->`pnpm dlx tsx index3_3_groq.ts` (modern)
