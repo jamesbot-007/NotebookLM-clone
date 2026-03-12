@@ -484,8 +484,206 @@ It Automatically calls `dotenv.config()` for you at import time. One liner, clea
 
 OR use the CLI **--env-file** flag `node --env-file=./custom/.env app.js`. This is node.js feature not **dotenv**
 
-## 
+## Ueful commands 
 
-
+```bash
 npm --> npx
 pnpm --> pnpx (older) ->`pnpm dlx tsx index3_3_groq.ts` (modern)
+```
+
+```
+git commit -a --amend --no-edit
+git commit -a --amend --no-edit
+```
+
+# Chapter 3: Tool Calling
+
+Tool allow the Agent to perform an action.
+
+If we ask the current weather in New Yourk. The LLM has cutoff time the agent is not trained on latest data(Today's weather). OR if we ask it to generate chart about current population(latest data) in miami. Then still it can't anwer. 
+
+But if you ask what is value of x if x + y = 12 then it will say "12-y". The models are trained on some mathematical book, That contains some basic arithmatic operations, equation solving, tables, etc.. So it is able to solve this .
+
+
+That is where we give a tool to the Agent in order to perform an action.
+
+**Agent  + [ search_tool, chart_generator, json_convertor ]**
+
+now we can ask questions like 
+- current weahter
+- chart about population
+- math problem
+
+before understanding tool, Understand `Runnable`
+
+### Runnable
+Runnable is way of taking the output of function and pass it as input to another Runnable. 
+- Runnable has some common methods already implemented `.invoke(), .batch(), .stream()`
+
+
+Runnable1 --> Runnable2 --> Runnable3
+
+
+### more
+
+Q. The newer version of dotenv prints the log message of loading `.env` each time when you run the program `[dotenv@17.3.1] injecting env (4) from ../.env -- tip: ⚙️  write to custom object with { processEnv: myObject }` to remove it 
+
+Solution: `dotenv.config({ path: '../.env',debug: false, quiet: true});`
+
+
+Q. After migrating to the pnpm there is big command i need to write to run the code `pnpm dlx tsx index.ts`
+
+Solution:
+
+- `dlx`  standas for DownLoad and eXecute. Download package temporarily, run it, and then discard it. You don't need to unstall the package permanenetly in your project or globally
+- `pnpx` and `pnpm dlx` both are almost same idea interally "pnpx" calls "pnpm dlx". so, **pnpx = pnpm dlx**
+
+> It is just recommendation to use `pnpm dlx` because it gives more readability. However both internally does same thing
+
+<br>
+
+1. Add package.json command , But then it will no longer be dynamic
+2. install tsx locally (much faster because it doesn't downloda each time)
+```bash
+pnpm add -D tsx
+pnpm tsx index.ts
+```
+
+3. install tsx globally
+```bash
+pnpm add -g tsx
+tsx index.ts
+```
+
+4. Create a shell alias
+```bash
+alias tsrun="pnpm dlx tsx"
+tsrun index.ts
+```
+
+
+**My Recommedation**
+> pnpm add -D tsx + set:  `alias run="pnpm tsx"`
+
+problem: But with "pnpm tsx" you need to mention the path relative to the package.json
+
+
+
+**More easy**<br>
+```bash
+pnpm add -g tsx
+
+#If it gives :  ERR_PNPM_NO_GLOBAL_BIN_DIR  Unable to find the global bin directory
+
+#then run : 
+pnpm setup
+source /home/codespace/.bashrc
+```
+
+> Now you can also run this way `tsx index.ts`. OR if you want to make it more reliable then, add **shabang** at top
+
+```js
+#!/usr/bin/env tsx
+
+console.log("Hello from TypeScript 🚀")
+```
+
+```bash
+chmod +x index.ts
+
+# NOTE: if the file doesn't have execute permission then even after you hit the tab ( ./inde). A linux compatiable machine will not do autocompletion.
+
+./index.ts
+```
+
+very clean
+
+---
+
+### something cool  `ask "What is langchain?"`
+
+The trick can be done using a command runner so your script behave like real CLI commands. A popular tool used in many dev / AI repos is `just`
+
+Just is an open-source software toolkit for automating and managing build and test workflows, developed by Microsoft. 
+
+just was intially created for javascript/Typescript but now it is general-purpose command line runner and work with almost every programming language. 
+
+1. Install just 
+```bash
+sudo apt install just
+```
+
+2. create a `justfile`
+```bash
+project/
+ ├ package.json
+ ├ justfile   <---------- Here is the file
+ └ scripts/
+      ask.ts
+      rag.ts
+      embed.ts
+```
+
+Example:
+```bash
+ask question:
+    tsx scripts/ask.ts {{question}}
+
+rag file:
+    tsx scripts/rag.ts {{file}}
+
+embed file:
+    tsx scripts/embed.ts {{file}}
+```
+
+Run the command:
+```bash
+just ask "What is LangChain?"
+```
+
+> MK: It is not like that you have to put the command line input. If you use it to just reduce your large command-line command then still ok 
+>> This is something MK is finding since a long time. 
+> This works on Windows🪟 also 
+
+For that you need to modify code so that LangChain can get the question from the command line
+
+
+```js
+// ask.ts
+
+const question = process.argv[2];
+console.log("Question:", question);
+```
+
+```bash
+just ask "What is RAG?"
+# output: Question: What is RAG?
+```
+
+
+Explanation
+```text
+process.argv
+[
+  node_path,
+  script_path,
+  arg1,
+  arg2,
+  ...
+]
+
+```
+
+
+## TavilySearch
+
+install tavily
+
+and set the api key in .env file
+
+---
+
+
+command to remove the cache from the git repo. Previously tracking some files but now don't want to track
+If Git was previously tracking files but you added them to .gitignore and want Git to stop tracking them, you need to remove them from the Git index (cache) while keeping them in your local filesystem.
+`git rm --cached path/to/file`
