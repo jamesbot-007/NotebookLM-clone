@@ -687,3 +687,23 @@ and set the api key in .env file
 command to remove the cache from the git repo. Previously tracking some files but now don't want to track
 If Git was previously tracking files but you added them to .gitignore and want Git to stop tracking them, you need to remove them from the Git index (cache) while keeping them in your local filesystem.
 `git rm --cached path/to/file`
+
+# LangGraph
+
+Langraph is a framework built on top of langchain. LangGraph allows to create a ai workflow.  Ai workflow is composed by set of nodes and edges. 
+
+
+
+No conditional Node:
+```bash
+Start --> A --> B --> C --> End
+```
+
+Conditional Node:
+```bash
+          | --> B --> |
+Start --> A           D --> End
+          | --> C --> |
+```
+
+
