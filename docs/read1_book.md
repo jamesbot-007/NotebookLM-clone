@@ -707,3 +707,251 @@ Start --> A           D --> End
 ```
 
 
+# RAG
+
+RAG stands for Retrival Augamented Generation
+
+RAG is technique that enhances a model's generation capabilities by retrieving the relevant information from external memory source. An external memory source can be : an internal database, a user's previous chat session, or the internet.
+
+1. Retrieval  : Retrived Data
+2. Augamented : Take retrieved data and augament the LLM
+3. Generation : LLM generate response based on retrieved data
+
+LLM is trained on huge amount of data on internet so, LLM becomes genius. If you ask chatGPT "what is javascript?" It respond immediately, Because it is trained on Javascript documentation.
+
+But if you ask chatGPT about something on which it is not trained on, "Who is morris the deragon?" (It is character of your some imaginary story, ChatGPT doesn't know about that, also that thing is not avaiable on internet. ChatGPT is not trained on that)
+
+This is limitation of LLM. RAG solve this limitation. There is another solution also **Fine-tuning** but it is computationally very expensive. 
+
+LLM Are Limited:
+- Don't have access to internet data (Although we can add Tavily Tool. But natively as vanilla LLM. LLM can not search internet)
+- Don't have access to external data sources
+
+
+
+User ---> external data(eb, wiki) / internal data(database, pdf, html) ---> Chunks(chunk1, chunk2, chunk3, ...) --> Embedding model --> [ [123, 127, 6, .. 79], [..], [...] ], ... --> Vector DB  <--->
+
+Context Window: It is the maximum amount of text an LLM can proces in one go.
+eg. 32k tokens
+
+That is the reason we need to devide the entire data into chunks and then passed to embedding model, instead of passing it all at once
+
+Vector database is something that store vector(numbers, 1D array). It stores [(chunk1, [vector]), (chunk2, [vector]), ...]
+
+## Main components of RAG
+
+1. retriver: It allows to retrive data from vector database. 
+
+question --> Embedding model --> send that embedded question to Vector database --> Vectr database will return N similar Document chunks using similarity search algorithm(using cosine similarity)
+
+2. Generator: Generate the Document chunks to the LLM as context so that it can give answer 
+
+
+Document chunks --> LLM --> Answer/respond
+
+
+
+We're going to use Cohere LLM provider. For embedding model. so, make sure you login to their website and add it to the `.env` file
+
+Then as Vector database we're going to use the Pinecone vector database. Create using tempmail(fake account). Because Pinecone offers only 1 Vector database free per account. Then it ask for payment. 
+
+- We need to create index(Database). Give the name to index. select the provider and make sure you don't chhose any subscription option.
+- You need to get the API key. set it in `.env` file
+
+
+```bash
+PINECONE_API_KEY=
+PINECONE_INDEX=
+```
+
+----
+
+Now both 
+```js
+if (!(process.env.COHERE_API_KEY && process.env.PINECONE_API_KEY && process.env.PINECONE_INDEX)) {
+  throw new Error("One or more required environment variables are missing in .env: PINECONE_API_KEY, PINECONE_INDEX, or COHERE_API_KEY");
+}
+```
+
+are same 
+```js
+if (!process.env.PINECONE_API_KEY || !process.env.PINECONE_INDEX || !process.env.COHERE_API_KEY) {
+  throw new Error("One or more required environment variables are missing in .env: PINECONE_API_KEY, PINECONE_INDEX, or COHERE_API_KEY");
+}
+```
+
+Both of these statements are logically equivalent due to **De Morgan's Laws** in boolean algebra.
+- De Morgan's Laws: `!(A && B && C)` is equivalent to `!A || !B || !C`.
+
+
+I need to use the same pinecone index again and again but the thing one index already have some documents,emebddings already.
+
+There is no way to make the pinecone database completely empty using the Pinecone UI(console) directly. 
+However you can delete the index entirely and create a new one. OR you can search vectors and delete them but you can not make it empty.
+
+You can make it empty programatically. 
+
+```js
+import { Pinecone } from "@pinecone-database/pinecone";
+
+const pc = new Pinecone({
+  apiKey: process.env.PINECONE_API_KEY,
+});
+
+const index = pc.index("your-index-name");
+
+// ✅ Delete everything in default namespace
+await index.deleteAll();
+```
+
+----
+
+Pinecone terminologies and it's relation with the SQL database
+
+Pinecone                    SQL Equivalent
+────────────────────────────────────────────
+Pinecone Service    →       Database Server (MySQL/PostgreSQL)
+Index               →       Database/Table
+Namespace           →       Schema/Partition within a Table
+Vectors             →       Rows
+
+
+**What is index ?**<br>
+An index is main container for your vector data. Think of it like database table in SQL. 
+
+Index:
+- has fiexed dimention (eg. 1536)
+- has specific similarity search technique a.k.a. metric (cosine, euclidean, dotproduct)
+- You are limited in how many indexes you can create (based on plan)
+
+
+**What is Namespace ?**<br>
+A namespace is a subdivision/partition inside an index. Think of it like partitions or schemas within a table. 
+
+```js
+// Different namespaces inside the same index
+const userDocs = index.namespace("user-documents");
+const companyDocs = index.namespace("company-documents");
+const blogPosts = index.namespace("blog-posts");
+
+// SQL equivalent:
+// SELECT * FROM my_index WHERE partition = 'user-documents';
+// SELECT * FROM my_index WHERE partition = 'company-documents';
+```
+
+Namespaces
+- Free to create - no extra cost
+- Unlimited namespaces within an index
+- Data in one namespacce is isolated from another
+- You don't need to pre-create then - they are created automatically
+
+Visual Representation
+```bash
+┌─────────────────── Pinecone Service ────────────────────┐
+│                                                         │
+│  ┌─────────────── Index: "my-app" ────────────────────┐ │
+│  │                                                    │ │
+│  │  ┌──────────────────────────────────────────────┐  │ │
+│  │  │  Namespace: "user-1"                         │  │ │
+│  │  │  ┌────────┐ ┌────────┐ ┌────────┐            │  │ │
+│  │  │  │Vector 1│ │Vector 2│ │Vector 3│            │  │ │
+│  │  │  └────────┘ └────────┘ └────────┘            │  │ │
+│  │  └──────────────────────────────────────────────┘  │ │
+│  │  ┌──────────────────────────────────────────────┐  │ │
+│  │  │  Namespace: "user-2"                         │  │ │
+│  │  │  ┌────────┐ ┌────────┐                       │  │ │
+│  │  │  │Vector 1│ │Vector 2│                       │  │ │
+│  │  │  └────────┘ └────────┘                       │  │ │
+│  │  └──────────────────────────────────────────────┘  │ │
+│  │                                                    │ │
+│  │  ┌──────────────────────────────────────────────┐  │ │
+│  │  │  Namespace: "" (default)                     │  │ │
+│  │  │  ┌────────┐ ┌────────┐ ┌────────┐ ┌────────┐ │  │ │
+│  │  │  │Vector 1│ │Vector 2│ │Vector 3│ │Vector 4│ │  │ │
+│  │  │  └────────┘ └────────┘ └────────┘ └────────┘ │  │ │
+│  │  └──────────────────────────────────────────────┘  │ │
+│  │                                                    │ │
+│  └────────────────────────────────────────────────────┘ │
+│                                                         │
+└─────────────────────────────────────────────────────────┘
+```
+
+Actually you can delete `namespace` by click on **namespace** tab on dashboard. Click on 3 dots and click on delete
+
+
+Visit:
+- ingestion_pipeline.ts
+- retriver.ts
+
+# Multi Qyeert generation
+Previously we learn how to retrive the data from the vector database using single query, this can lead to poor retrieval.
+
+The user's question can be too broad or can be too specific. The user's question sometimes may be can not align with the vocabulary of documents. In order to mitigate this kind of issue. LLM 
+
+
+        | --- q1 --> vector-store --> document  --> reranker model ---> |
+LLLM -- | --- q2 --> vector-store --> document  --> reranker model --- |------> pick 1 doc with high rank score (top 1) --> Fusion --> LLM --> Answer
+        | --- q3 --> vector-store --> document  --> reranker model ---> |
+
+
+Here **Fusion** means [RRF(Reciprocal Rank Fusion)](https://medium.com/@devalshah1619/mathematical-intuition-behind-reciprocal-rank-fusion-rrf-explained-in-2-mins-002df0cc5e2a)
+
+
+In order to generate query we use this prompt here,
+
+Prompt Engineering technique: StepBack Prompting
+```
+
+You are AI search assistant.
+  The user asked: {question}
+
+  Step back and consider this qestion more broadly!
+  1. Reframe it in general terms
+  2. Idedntify the main themes or dimentions involved
+  3. Generate 5 diverse search queries that cover these dimentions, ensuring-each query explores a different perspective or phrasing.
+
+
+```
+
+visit order:
+- ingestion_pipeline.ts
+- retriver.ts
+- generator.ts
+- geerator2.ts
+- retriver2.ts
+- RRPF.ts
+
+
+
+### StepBack Prompting
+Instead of directly answering a narrow question, you:
+1. Ask a more general or conceptual question
+2. Then use that broader understanding to answer the original question
+
+
+
+Example: 
+Q. "What factord affects chemical reacting rates?"
+Then asked Q. "Give those factors, why does increasing temparture increase reaction rate?"
+
+Another Example:
+Direct: “Why is my async function not returning data?”
+
+Step-back
+- “How do async functions work in JavaScript?”
+- “Based on that, why might an async function not return data?”
+
+
+
+Compared to Other Techniques
+- `Chain-of-Thought prompting` → step-by-step reasoning
+- `Step-back prompting` → zoom out → understand → zoom in
+
+
+Use it when:
+- The queston is complex
+- You want deeper understanding
+- The model gives vague or incorrect answers
+
+Think of it like: 
+> "Before solvung the problem, understand the theory behind it."
