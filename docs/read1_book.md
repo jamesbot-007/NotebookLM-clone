@@ -955,3 +955,70 @@ Use it when:
 
 Think of it like: 
 > "Before solvung the problem, understand the theory behind it."
+
+
+# Different RAG techniques
+
+RAG : We said RAG is technique that allows to enhance the model's generation by proving the model the possibility to get access to the external data sources 
+
+**We have different RAG techniques**:
+
+1. Native RAG: The most basic form, directly using retrived data as input for generation without further processing or refinement.
+
+2. Advanced RAG: Employs more sophisticated techniques for retrieval and generation, often involving deep learning-based methods and neural search algorithms
+
+3. Modular RAG: Break down the RAG process into functional modules(eg. search, memory, fusion) that can be customized and rearranged for specific tasks, offering greater flexibility
+
+4. Corrective RAG: Includ a verification and correction step after the initial generation, aiming to minimize error and improve response accuracy.
+
+5. Speculative RAG: Anticipate user needs by predicting queries and preparing relevant response in advance, potentially improving response time. 
+
+6. Agentic RAG: Integrates an autonomous agent into the RAG pipeline, enabling the system to learn user preferences and adapt over time through repeated interactions. 
+
+7. Self-RAG: Here model retrive information on demand and critiques its own generated output using special tokens to ensure high accuracy.
+
+
+
+-------------------------------
+
+
+
+Here, We will focus only one the **Native RAG** and **Corrective RAG**.
+
+
+**Native RAG**
+
+We have doucment. 
+Inside the document we talk about python, Python programming language. We take that document and we will store it into the vector database. and we're goig to ask `What is Python?`
+
+and then we get this defination from the model `Given retried Data, Python is interpreated language`
+
+Now suppose the book has falsy defiation of python. `Python  is compiled language`. Ok we got defective response. 
+
+
+In order to solve this kind of issue, We're gonna leverage Corrective RAG.
+
+**Corrective RAG**
+
+User asked as question(query). We fetch(retrive) data from the vector database. Inside our vector database we have false defination of python. Once we got that data LLM is going to evaluate the user question versus retrived data.
+
+
+If the LLM says, data received from vector database is irrelevant to the user question, we're going to perform a web search. We've the web data. We pass it to the LLM in order to generate response for the user. 
+
+
+If the user question is relevant, we return the response
+If not, make web search
+
+
+```bash
+     |--q1->vector-store->doc-->reranke-->|high rank doc|                                                                             |-> if relevant doc found , pass to ----------------------------------> LLM ---> Answer
+LLM--|--q2->vector-store->doc-->reranke-->|high rank doc|-->Fusion (Array)->Loop over that array to find relevant Document--"router"--|                                                                     ↑    
+     |--q3->vector-store->doc-->reranke-->|high rank doc|                                                                             |-> If no relevant document found -> web search and get web data ---> ↑
+--> LLM --> Answer 
+```
+
+
+(zoom-out for better view)
+
+visit: **qa_overdocs.ts**
+
