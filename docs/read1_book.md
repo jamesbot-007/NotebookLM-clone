@@ -1098,3 +1098,12 @@ Lockfile is up to date, resolution step is skipped
 Already up to date
 Done in 788ms using pnpm v10.23.0
 ``` 
+
+-----
+
+
+Now, using the same technique(map reduce technique) to generate **study-guide**.
+
+visit:
+- study_guide.ts
+- briefing_doc.ts
