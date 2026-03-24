@@ -1179,3 +1179,134 @@ mei.init(data)
 ```
 
 code from :https://docs.mind-elixir.com/docs/getting-started/typescript-support
+
+
+# Creating Backend ( Build Express Server)
+
+Folder structure
+```bash
+src/app/
+├── bootstrap/
+│   ├── exceptions/
+│   └── express/
+│       └── expressServer.ts
+└── http/
+    └── controllers/
+        ├── auth/
+        └── notes/
+```
+
+visit:
+
+- expressServer.ts
+
+
+install type definations of express for typescript support `.t.ds` files
+
+`pnpm add -D @types/express`
+
+
+
+now we use another module called `tsconfig-paths`. We're going to use this module in order to define path alias for module resolution in typescript projects
+
+we're going to use in order to run the express server. 
+
+`nodemon --exec ts-node -r tsconfig-paths/register src/index.ts`
+
+
+--------------------------
+
+NPM has strict rules for package names:
+- ❌ No uppercase letters
+- ✅ Only lowercase letters allowed
+- ✅ Can use `-`, `_`, `.`
+- ❌ No special characters like !, spaces, etc.
+- ❌ Cannot start with `.` or `_`
+
+👉 “all the characters… must be lowercase”
+
+If the name is already taken on npm, you can use scoped packages: `"name": "@yourname/notebooklm-clone"`
+
+
+-------------------------------------
+
+## Workflow Explanation
+
+Over all workflow:
+1. src/index.ts : Entry point that starts everything
+2. src/app/bootstrap/index.ts : Coordinates the setup process
+3. src/app/bootstrap/express/expressServer.ts : Configure and actually start express server
+4. src/app/bootstrap/exceptions/handleExpressionError.ts : Handle errors that occur in the app. The safety inspector who handle problems
+
+Explain the code : 
+
+1. `src/index.ts` (The Starting Point)
+
+perform necessary imports.
+Import bootstrap function that will setup server. 
+
+`app=express()` create a new Express application (a web server instance)
+
+call the bootstrap function to setup and start server. Pass express application and port. 
+
+2. `src/app/bootstrap/index.ts` (The Coordinator)
+
+import Express type for TypeScript, helps with code type checking.
+import the function `expressServer` that will actually start the server.
+
+create a function named `bootStrap` take two parameters. 
+
+3. `src/app/bootstrap/express/expressServer.ts` (The Builder)
+
+import **CORS(Cross-Origin Resource Sharing)**. This allows your server to accept requests from web browsers on different domains. Different domain can send request to your server.
+- without CORS your server reject request from `http://example.com`
+- with CORS your server accepts requests from any websites.
+
+import the Error handling function `handleExpressError`
+
+create and export `expressServer` function. Takes the Express app and PORT number as inputs. Configure CORS **middleware**. 
+- `origin: "*"` means "accept requests from any website"
+- `credentials:true` allow cookies and authentication headers
+
+`app.use(express.json())` Adding a middleware that can parse incoming JSON data. When someone can send `{"name": "John"}`, Express can understand it
+
+`app.use(express.urlencoded({extended:true}))` : Adds middleware to parse URL-encoded data (form submissions). `extened: true` allow rich object and array to be encoded
+
+- rich object = complex, nested data structures
+  - simple(not rich): `name=John&age=25`
+  - rich objects (extended: true) : `user[name]=John&user[address][city]=NYC&hobbies[0]=reading&hobbies[1]=coding`
+
+  ```json
+  {
+    "user": {
+      "name": "John",
+      "address": { "city": "NYC" }
+    },
+    "hobbies": ["reading", "coding"]
+  }
+  ```
+
+
+`app.use(handleExpressError)` Use error handling middleware
+
+Create a GET request root path `"/"`. req = incoming request, res = outgoing response. Send the JSON response with success message. 
+
+Tell the server to start listening on specific PORT.
+
+4. `src/app/bootstrap/exceptions/handleExrpressError.ts` (The Safety Inspector)
+
+create an error handling function. Take 4 parameters(this is required when you create a custom error handler for Express )
+- `err`: error the occurred
+- `req` : request object, `res`: response object
+- `next`: Function to pass "the control" to next middleware
+
+determine the HTTP status code. If the response status code is not 200(success) use the status code. othersie set it to 500(internal server error)
+
+keep the status code and sned JSON data.
+
+**Q. When the Error Middleware called ?**
+- called when any route/middleware throws and error
+- you explicitly call `next(error)`
+
+**Q. Inside `handleExpressError()` we haven't call the next() does this is valid ?**
+Error handler
