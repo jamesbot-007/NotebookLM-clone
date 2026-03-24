@@ -1022,3 +1022,79 @@ LLM--|--q2->vector-store->doc-->reranke-->|high rank doc|-->Fusion (Array)->Loop
 
 visit: **qa_overdocs.ts**
 
+# Map Reduce Technique
+
+A "devide and conquer" approch that involves breaking document into chunks, <u>generating a summary for each chunk</u> and then combining and summerizing those smaller summaries into a final consolidated one
+
+- Summary
+- Study guide
+- Briefing DOC
+- FAQ
+- MindMap (Knowledge graph)
+
+
+Workflow :
+```bash
+source doc --> text splitter --> Chunks of Doc --> Final Summary(LLM) --> Array of summaries 
+                                                      ^-----------------v
+```
+
+
+our graph will look like this:
+```bash
+Doc --> Break into multiple chunks --> MapSummary ----> Take pice by piece ---> Pass to LLM ---> Sumaries [array] ---> summaries 
+                                              |                                                              |                                                                   
+                                              |                                                              |                                                                   
+                                              v                                                              |                                                        
+                                      Iterate thorugh array of documents                                  Count no of Tokens of summary   (Check condition)                                                                                                                                                                 
+
+
+
+condition : 
+
+
+const max_tokens = 1k # max_no_token_llm_can_have_as_context
+
+If Count < max_tokens
+
+  GenerateFinalSummary
+
+else 
+
+collapseSummary --> split summaries into small summaries ( untill TokenLength of summaries becomes < max_tokens ) --> Summaries [array] --> GenerateFinalSummary
+
+```
+
+
+## Send() Function
+
+It is basicallly a function that we use in order to send the data from one to another node in a graph. It is langgraph's functionality
+
+visit: test.ts
+visit  : summary.ts
+
+
+---
+
+Very few times you see the Depreciation warning during installation of package like `pnpm add langchain`
+
+example 
+```bash
+ WARN  3 deprecated subdependencies found: @types/marked@6.0.0, node-domexception@1.0.0, whatwg-encoding@3.1.1
+
+```
+
+To avoid it: you want to suppress those deprecation warnings in the future, you can add to your `.npmrc`: loglevel=error
+
+```bash
+cd /workspaces/NotebookLM-clone
+touch .npmrc
+echo "loglevel=error" >> .npmrc
+```
+
+Now you will see clear output without deprecation warnings
+```bash
+Lockfile is up to date, resolution step is skipped
+Already up to date
+Done in 788ms using pnpm v10.23.0
+``` 
