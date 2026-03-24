@@ -1107,3 +1107,75 @@ Now, using the same technique(map reduce technique) to generate **study-guide**.
 visit:
 - study_guide.ts
 - briefing_doc.ts
+
+
+# Mind Map
+
+Till now we learned about : summary, study guide, briefing doc, generate faq
+and we learn about Prompt Engineering also.
+
+Now we need to create **mind-map**.
+
+At the end we will see how to generate:
+- **audio** and
+- **video**
+(We will work on these two things at the end)
+
+After this section we will work on backend
+0. Refactor a backend
+1. Build the Express Server
+2. Setup Auth using Google
+3. Google Drive Integration
+4. user api
+5. Notes api
+6. Setup React Project
+7. Build UI
+8. API intergraion (React)
+
+
+## What is a `MindMap`
+
+A mindmap is diagram that allows to visualize a topic to make it easy to understand 
+
+Workflow
+
+```bash
+
+
+Source : Prompt Engineering   --> LLM --> FAQ, Summary, Study guide, Briefing doc, MindMap, Audio, Video --> Study guide --> use `study_guide` to generate mind_map
+
+```
+
+In order to generate mind map we use [mind elixer](https://docs.mind-elixir.com/) library. Mind elixir is the open-source JS library.
+To create an mind map we need to force The LLM to generate object like this 
+
+
+```
+import MindElixir, { MindElixirData, Options } from 'mind-elixir'
+
+const options: Options = {
+  el: '#map',
+}
+const data: MindElixirData = {
+  nodeData: {
+    id: 'root',
+    topic: 'root',
+    children: [
+      {
+        id: 'sub1',
+        topic: 'sub1',
+        children: [
+          {
+            id: 'sub2',
+            topic: 'sub2',
+          },
+        ],
+      },
+    ],
+  },
+}
+const mei = new MindElixir(options)
+mei.init(data)
+```
+
+code from :https://docs.mind-elixir.com/docs/getting-started/typescript-support
